@@ -1,6 +1,10 @@
 const fs = require("fs");
 
-const pdfParse = require("pdf-parse");
+const {
+  extractTextFromPDF,
+} = require(
+  "../services/pdfService"
+);
 
 const mammoth = require("mammoth");
 
@@ -9,13 +13,26 @@ const axios = require("axios");
 const Candidate =
   require("../models/Candidate");
 
+const Job =
+  require("../models/Job");
+
 const {
   checkDuplicateCandidate,
 } = require("../services/duplicateService");
 
+const {
+  resolveJobTitle,
+} = require("../utils/jobTitleHelper");
+
+const AI_SERVICE_URL =
+  process.env.AI_SERVICE_URL ||
+  "http://localhost:8000";
+
 const uploadResume = async (req, res) => {
 
   try {
+
+    const { jobId } = req.body;
 
     if (!req.file) {
 
@@ -24,26 +41,51 @@ const uploadResume = async (req, res) => {
       });
     }
 
+    // Get Selected Job
+    const selectedJob =
+      await Job.findById(jobId);
+
+    if (!selectedJob) {
+
+      return res.status(404).json({
+        success: false,
+        message: "Selected job not found",
+      });
+    }
+
+    const selectedJobData = {
+      requiredSkills:
+        selectedJob.requiredSkills || [],
+
+      minimumExperience:
+        selectedJob.minimumExperience || 0,
+
+      preferredEducation:
+        selectedJob.preferredEducation || [],
+
+      title:
+        resolveJobTitle(
+          selectedJob.title,
+          selectedJob.rawJDText
+        ),
+    };
+
     const filePath = req.file.path;
 
     let extractedText = "";
 
-    // PDF
+    // PDF Parsing
     if (
       req.file.mimetype ===
       "application/pdf"
     ) {
-
-      const dataBuffer =
-        fs.readFileSync(filePath);
-
-      const pdfData =
-        await pdfParse(dataBuffer);
-
-      extractedText = pdfData.text;
+        extractedText =
+          await extractTextFromPDF(
+            filePath
+          );
     }
 
-    // DOCX
+    // DOCX Parsing
     else if (
       req.file.mimetype ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -57,10 +99,10 @@ const uploadResume = async (req, res) => {
       extractedText = result.value;
     }
 
-    // Parse Resume
+    // Parse Resume Using AI Service
     const parseResponse =
       await axios.post(
-        "http://localhost:8000/parse-resume",
+        `${AI_SERVICE_URL}/parse-resume`,
         {
           resume_text: extractedText,
         }
@@ -84,21 +126,39 @@ const uploadResume = async (req, res) => {
       });
     }
 
-    // Semantic Match
+    // Multi-parameter AI Matching
     const matchResponse =
       await axios.post(
-        "http://localhost:8000/match-resume",
+        `${AI_SERVICE_URL}/advanced-match`,
         {
-          candidate_skills:
-            parsedData.skills,
+          candidate_data: {
+            name:
+              parsedData.name,
 
-          required_skills: [
-            "React",
-            "Node.js",
-            "MongoDB",
-            "Docker",
-            "LangChain",
-          ],
+            skills:
+              parsedData.skills,
+
+            experience:
+              parsedData.experience,
+
+            projects:
+              parsedData.projects,
+
+            education:
+              parsedData.education,
+
+          },
+
+          job_data: {
+            required_skills:
+              selectedJobData.requiredSkills,
+
+            minimum_experience:
+              selectedJobData.minimumExperience,
+
+            preferred_education:
+              selectedJobData.preferredEducation,
+          },
         }
       );
 
@@ -109,13 +169,23 @@ const uploadResume = async (req, res) => {
     const candidate =
       await Candidate.create({
 
+        // Basic Info
         name: parsedData.name,
 
         email: parsedData.email,
 
         phone: parsedData.phone,
 
-        skills: parsedData.skills,
+        // Selected Job Info
+        jobTitle:
+          selectedJobData.title,
+
+        requiredSkills:
+          selectedJobData.requiredSkills,
+
+        // Candidate Skills
+        skills:
+          parsedData.skills,
 
         normalizedSkills:
           matchData.normalized_skills,
@@ -124,8 +194,13 @@ const uploadResume = async (req, res) => {
           matchData.expanded_skills,
 
         missingSkills:
-            matchData.missing_skills,
+          matchData.missingSkills ||
+          matchData.missing_skills,
 
+        projects:
+          parsedData.projects,
+
+        // Resume Data
         experience:
           parsedData.experience,
 
@@ -135,13 +210,42 @@ const uploadResume = async (req, res) => {
         jobTitles:
           parsedData.job_titles,
 
-        resumeText: extractedText,
+        resumeText:
+          extractedText,
 
+        // AI Match Data
         matchScore:
+          matchData.finalScore ||
           matchData.match_score,
 
+        skillsScore:
+          matchData.skillsScore ||
+          matchData.skills_score,
+
+        experienceScore:
+          matchData.experienceScore ||
+          matchData.experience_score,
+
+        projectScore:
+          matchData.projectScore ||
+          matchData.project_score,
+
+        educationScore:
+          matchData.educationScore ||
+          matchData.education_score,
+
         explanation:
+          matchData.aiExplanation ||
           matchData.explanation,
+
+        experienceAnalysis:
+          matchData.experienceAnalysis,
+
+        projectAnalysis:
+          matchData.projectAnalysis,
+
+        educationAnalysis:
+          matchData.educationAnalysis,
 
         uploadedFile:
           req.file.filename,

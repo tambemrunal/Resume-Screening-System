@@ -7,9 +7,10 @@ const path = require("path");
 const fs = require("fs");
 
 const {
-  uploadResume,
+  uploadJD,
+  getJobs,
 } = require(
-  "../controllers/resumeController"
+  "../controllers/jdController"
 );
 
 const router = express.Router();
@@ -17,7 +18,7 @@ const router = express.Router();
 // Absolute Upload Path
 const uploadPath = path.join(
   __dirname,
-  "../uploads/resumes"
+  "../uploads/jd"
 );
 
 // Auto-create upload folder
@@ -65,11 +66,17 @@ const upload = multer({
   storage,
 });
 
-// Upload Resume Route
+// Upload JD Route
 router.post(
   "/upload",
-  upload.single("resume"),
-  uploadResume
+  upload.single("jd"),
+  uploadJD
+);
+
+// Get All Jobs
+router.get(
+  "/",
+  getJobs
 );
 
 module.exports = router;

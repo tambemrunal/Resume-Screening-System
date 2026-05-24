@@ -4,21 +4,22 @@ function MatchScoreCard({ score }) {
 
     <div
       className="
-      bg-green-100
+      bg-slate-900
+      text-white
       p-4
-      rounded-xl
+      rounded-lg
       shadow
     "
     >
       <h2 className="text-lg font-bold">
-        Match Score
+        Final AI Score
       </h2>
 
       <p
         className="
         text-4xl
         font-bold
-        text-green-700
+        text-white
         mt-2
       "
       >

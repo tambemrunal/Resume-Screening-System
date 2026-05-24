@@ -7,6 +7,15 @@ const resumeRoutes =
   const candidateRoutes =
   require("./routes/candidateRoutes");
 
+const jobRoutes =
+  require("./routes/jobRoutes");
+
+const matchRoutes =
+  require("./routes/matchRoutes");
+
+const jdRoutes =
+  require("./routes/jdRoutes");
+
 const app = express();
 
 app.use(cors());
@@ -17,6 +26,9 @@ app.use(
   "/api/candidates",
   candidateRoutes
 );
+app.use("/api/jobs", jobRoutes);
+app.use("/api/match", matchRoutes);
+app.use("/api/jd", jdRoutes);
 
 app.get("/", (req, res) => {
   res.json({

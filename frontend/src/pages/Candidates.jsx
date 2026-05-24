@@ -15,27 +15,17 @@ function Candidates() {
 
   useEffect(() => {
 
-    fetchCandidates();
-
-  }, []);
-
-  const fetchCandidates =
-    async () => {
-
-      try {
-
-        const data =
-          await getCandidates();
-
+    getCandidates()
+      .then((data) => {
         setCandidates(
           data.candidates
         );
-
-      } catch (error) {
-
+      })
+      .catch((error) => {
         console.log(error);
-      }
-    };
+      });
+
+  }, []);
 
   return (
 

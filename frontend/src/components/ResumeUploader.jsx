@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState }
+  from "react";
 
 import { uploadResume }
   from "../api/resumeApi";
+
+import { getJobs }
+  from "../api/jdApi";
+
+import CandidateCard
+  from "./CandidateCard";
+
+import Popup
+  from "./Popup";
 
 function ResumeUploader() {
 
@@ -11,41 +21,97 @@ function ResumeUploader() {
   const [loading, setLoading] =
     useState(false);
 
+  const [jobs, setJobs] =
+    useState([]);
+
+  const [selectedJob, setSelectedJob] =
+    useState("");
+
   const [result, setResult] =
     useState(null);
 
-  const handleUpload = async () => {
+  const [popup, setPopup] =
+    useState(null);
 
-    if (!file) return;
+  useEffect(() => {
 
-    try {
+    getJobs()
+      .then((data) => {
+        setJobs(data.jobs);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
 
-      setLoading(true);
+  }, []);
 
-      const formData =
-        new FormData();
+  const handleUpload =
+    async () => {
 
-      formData.append(
-        "resume",
-        file
-      );
+      if (!selectedJob) {
+        setPopup({
+          type: "error",
+          message:
+            "Please select a job profile before analyzing the resume.",
+        });
+        return;
+      }
 
-      const data =
-        await uploadResume(
-          formData
+      if (!file) {
+        setPopup({
+          type: "error",
+          message:
+            "Please upload a resume file before starting analysis.",
+        });
+        return;
+      }
+
+      try {
+
+        setLoading(true);
+
+        const formData =
+          new FormData();
+
+        formData.append(
+          "resume",
+          file
         );
 
-      setResult(data);
+        formData.append(
+          "jobId",
+          selectedJob
+        );
 
-    } catch (error) {
+        const data =
+          await uploadResume(
+            formData
+          );
 
-      console.log(error);
+        setResult(data);
 
-    } finally {
+        setPopup({
+          type: "success",
+          message:
+            "Resume analyzed successfully.",
+        });
 
-      setLoading(false);
-    }
-  };
+      } catch (error) {
+
+        console.log(error);
+
+        setPopup({
+          type: "error",
+          message:
+            error.response?.data?.message ||
+            "Resume analysis failed. Please try again.",
+        });
+
+      } finally {
+
+        setLoading(false);
+      }
+    };
 
   return (
 
@@ -58,6 +124,13 @@ function ResumeUploader() {
       mb-8
     "
     >
+      <Popup
+        message={popup?.message}
+        type={popup?.type}
+        onClose={() =>
+          setPopup(null)
+        }
+      />
 
       <h2
         className="
@@ -69,6 +142,42 @@ function ResumeUploader() {
         Upload Resume
       </h2>
 
+      {/* Job Selection */}
+
+      <select
+        value={selectedJob}
+        onChange={(e) =>
+          setSelectedJob(
+            e.target.value
+          )
+        }
+        className="
+        border
+        p-3
+        w-full
+        mb-4
+        rounded-lg
+      "
+      >
+
+        <option value="">
+          Select Job Profile
+        </option>
+
+        {jobs.map((job) => (
+
+          <option
+            key={job._id}
+            value={job._id}
+          >
+            {job.title} ({job._id?.slice(-8)})
+          </option>
+        ))}
+
+      </select>
+
+      {/* File Upload */}
+
       <input
         type="file"
         onChange={(e) =>
@@ -76,7 +185,12 @@ function ResumeUploader() {
             e.target.files[0]
           )
         }
+        className="
+        mb-4
+      "
       />
+
+      {/* Upload Button */}
 
       <button
         onClick={handleUpload}
@@ -84,32 +198,41 @@ function ResumeUploader() {
         bg-black
         text-white
         px-6
-        py-2
+        py-3
         rounded-lg
-        mt-4
       "
       >
 
         {loading
-          ? "Uploading..."
-          : "Upload Resume"}
+          ? "Analyzing Resume..."
+          : "Analyze Resume"}
 
       </button>
 
+      {/* Success Message */}
+
       {result && (
 
-        <div className="mt-4">
-
-          <p
+        <>
+          <div
             className="
+            mt-4
             text-green-700
             font-semibold
           "
           >
-            Resume Processed Successfully
-          </p>
+            Resume analyzed successfully
+          </div>
 
-        </div>
+          {result.candidate && (
+            <div className="mt-6">
+              <CandidateCard
+                candidate={result.candidate}
+                defaultOpen
+              />
+            </div>
+          )}
+        </>
       )}
 
     </div>

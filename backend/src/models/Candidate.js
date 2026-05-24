@@ -18,6 +18,19 @@ const candidateSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Job Info
+    jobTitle: {
+      type: String,
+      default: "",
+    },
+
+    requiredSkills: [
+      {
+        type: String,
+      },
+    ],
+
+    // Candidate Skills
     skills: [
       {
         type: String,
@@ -37,10 +50,17 @@ const candidateSchema = new mongoose.Schema(
     ],
 
     missingSkills: [
-        {
-            type: String,
-        },
-    ],      
+      {
+        type: String,
+      },
+    ],
+
+    // Projects
+    projects: [
+      {
+        type: String,
+      },
+    ],
 
     experience: {
       type: Number,
@@ -63,12 +83,48 @@ const candidateSchema = new mongoose.Schema(
       type: String,
     },
 
+    // AI Scores
     matchScore: {
       type: Number,
       default: 0,
     },
 
+    skillsScore: {
+      type: Number,
+      default: 0,
+    },
+
+    experienceScore: {
+      type: Number,
+      default: 0,
+    },
+
+    projectScore: {
+      type: Number,
+      default: 0,
+    },
+
+    educationScore: {
+      type: Number,
+      default: 0,
+    },
+
     explanation: {
+      type: String,
+      default: "",
+    },
+
+    experienceAnalysis: {
+      type: String,
+      default: "",
+    },
+
+    projectAnalysis: {
+      type: String,
+      default: "",
+    },
+
+    educationAnalysis: {
       type: String,
       default: "",
     },

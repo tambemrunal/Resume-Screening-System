@@ -1,10 +1,18 @@
+import { useState }
+  from "react";
+
 import ResumeUploader
   from "../components/ResumeUploader";
 
 import Candidates
   from "./Candidates";
 
+import Jobs from "../components/Jobs";
+
 function Dashboard() {
+
+  const [activeTab, setActiveTab] =
+    useState("dashboard");
 
   return (
 
@@ -26,9 +34,63 @@ function Dashboard() {
         AI Resume Screening System
       </h1>
 
-      <ResumeUploader />
+      {/* Tabs */}
 
-      <Candidates />
+      <div
+        className="
+        flex
+        gap-4
+        mb-8
+      "
+      >
+
+        <button
+          onClick={() =>
+            setActiveTab(
+              "dashboard"
+            )
+          }
+          className="
+          bg-black
+          text-white
+          px-6
+          py-2
+          rounded-lg
+        "
+        >
+          Dashboard
+        </button>
+
+        <button
+          onClick={() =>
+            setActiveTab("jobs")
+          }
+          className="
+          bg-blue-600
+          text-white
+          px-6
+          py-2
+          rounded-lg
+        "
+        >
+          Jobs
+        </button>
+
+      </div>
+
+      {activeTab ===
+        "dashboard" && (
+
+        <>
+          <ResumeUploader />
+
+          <Candidates />
+        </>
+      )}
+
+      {activeTab === "jobs" && (
+        <Jobs />
+      )}
 
     </div>
   );
