@@ -114,7 +114,9 @@ const uploadResume = async (req, res) => {
     // Duplicate Check
     const existingCandidate =
       await checkDuplicateCandidate(
-        parsedData.email
+        parsedData.email,
+        selectedJob._id,
+        selectedJobData.title
       );
 
     if (existingCandidate) {
@@ -122,7 +124,7 @@ const uploadResume = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Candidate already exists",
+          "Candidate already analyzed for this job",
       });
     }
 
@@ -177,6 +179,9 @@ const uploadResume = async (req, res) => {
         phone: parsedData.phone,
 
         // Selected Job Info
+        jobId:
+          selectedJob._id,
+
         jobTitle:
           selectedJobData.title,
 

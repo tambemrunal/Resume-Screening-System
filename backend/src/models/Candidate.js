@@ -10,7 +10,8 @@ const candidateSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
+      lowercase: true,
+      trim: true,
     },
 
     phone: {
@@ -19,6 +20,11 @@ const candidateSchema = new mongoose.Schema(
     },
 
     // Job Info
+    jobId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+    },
+
     jobTitle: {
       type: String,
       default: "",
@@ -136,6 +142,20 @@ const candidateSchema = new mongoose.Schema(
 
   {
     timestamps: true,
+  }
+);
+
+candidateSchema.index(
+  {
+    email: 1,
+    jobId: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      email: { $type: "string" },
+      jobId: { $exists: true },
+    },
   }
 );
 
